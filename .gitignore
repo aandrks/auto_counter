@@ -2,3 +2,5 @@
 .streamlit/secrets.toml
 .env
 .idea
+car_cards.json
+__pycache__/
