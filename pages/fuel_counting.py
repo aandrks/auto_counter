@@ -6,7 +6,7 @@ import pandas as pd
 from datetime import datetime
 import json
 
-from utils.constants import DEFAULT_CARS_LIST, DEFAULT_NORM_DICT
+from utils.constants import DEFAULT_CARS_LIST, DEFAULT_NORM_DICT, SMALL_CARS_LIST
 from utils.gsheets import get_odometer_dataframe, clear_odometer_cache
 from utils.odometer_logic import (
     parse_date_input,
@@ -30,14 +30,35 @@ def main():
     with st.sidebar:
         st.header("⚙️ Parameters")
 
-        # Cars list
-        with st.expander("🚗 Car List", expanded=False):
-            cars_list_str = st.text_area(
-                "Car numbers (one per line)",
+        # Cars list: two lists
+        list_choice = st.radio(
+            "Car list",
+            options=["Полный список", "Малый список"],
+            horizontal=True
+        )
+        with st.expander("🚗 Car Lists", expanded=False):
+            if list_choice == "Полный список":
+                active_label = "Active: Полный список"
+            else:
+                active_label = "Active: Малый список"
+            st.markdown(active_label)
+
+            full_list_str = st.text_area(
+                "Полный список (one per line)",
                 value="\n".join(DEFAULT_CARS_LIST),
-                height=150
+                height=200,
+                help="Full list of cars."
             )
-            cars_list = [c.strip() for c in cars_list_str.split("\n") if c.strip()]
+            small_list_str = st.text_area(
+                "Малый список (one per line)",
+                value="\n".join(SMALL_CARS_LIST),
+                height=110,
+                help="Short list of cars."
+            )
+
+        full_list = [c.strip() for c in full_list_str.split("\n") if c.strip()]
+        small_list = [c.strip() for c in small_list_str.split("\n") if c.strip()]
+        cars_list = full_list if list_choice == "Полный список" else small_list
 
         # Norms
         with st.expander("📏 Consumption Norms", expanded=False):
@@ -57,28 +78,28 @@ def main():
             clear_odometer_cache()
             st.rerun()
 
-    # Main content - file upload
+    # Main content - file upload (single uploader for both files)
     st.subheader("📁 Upload Fuel Data Files")
-    st.markdown("Upload **two Excel files** with fuel data (as in original workflow).")
+    st.markdown("Upload **two Excel files** with fuel data (hold Ctrl/Cmd to select both).")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        file1 = st.file_uploader("First Excel file", type=["xlsx", "xls"], key="fuel_file1")
-    with col2:
-        file2 = st.file_uploader("Second Excel file", type=["xlsx", "xls"], key="fuel_file2")
+    files = st.file_uploader(
+        "Fuel Excel files",
+        type=["xlsx", "xls"],
+        accept_multiple_files=True,
+        key="fuel_files"
+    )
 
-    if not file1 or not file2:
-        st.info("👆 Please upload both Excel files to proceed.")
+    if not files or len(files) < 2:
+        st.info(f"👆 Uploaded {len(files) if files else 0} of 2 files. Please upload both Excel files to proceed.")
         return
 
     # Process files
     try:
         with st.spinner("Reading Excel files..."):
-            df1 = pd.read_excel(file1)
-            df2 = pd.read_excel(file2)
-            df_combined = pd.concat([df1, df2], ignore_index=True)
+            dfs = [pd.read_excel(f) for f in files]
+            df_combined = pd.concat(dfs, ignore_index=True)
 
-        st.success(f"Loaded {len(df1)} + {len(df2)} = {len(df_combined)} rows")
+        st.success(f"Loaded {len(files)} files, {len(df_combined)} rows total")
 
         # Extract date from fuel data
         dt_date = extract_date_from_fuel_data(df_combined)

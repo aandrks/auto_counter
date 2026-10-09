@@ -11,6 +11,9 @@ DEFAULT_CARS_LIST = [
     '970', '428', '614', '923', '895'
 ]
 
+# Small car list (alternative)
+SMALL_CARS_LIST = ['273', '311', '072', '977', '757', '2650']
+
 # Default norms dictionary - can be overridden in secrets.toml
 DEFAULT_NORM_DICT = {
     '709': 14, '664': 22, '647': 22, '945': 11, '830': 11, '586': 14, '072': 13,

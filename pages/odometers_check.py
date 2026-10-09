@@ -6,7 +6,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import calendar
 
-from utils.constants import DEFAULT_CARS_LIST
+from utils.constants import DEFAULT_CARS_LIST, SMALL_CARS_LIST
 from utils.gsheets import get_odometer_dataframe, clear_odometer_cache
 from utils.odometer_logic import (
     parse_date_input,
@@ -68,15 +68,35 @@ def main():
 
         st.divider()
 
-        # Cars list management
-        with st.expander("🚗 Car List", expanded=False):
-            cars_list_str = st.text_area(
-                "Car numbers (one per line)",
+        # Cars list management: two lists
+        list_choice = st.radio(
+            "Car list",
+            options=["Полный список", "Малый список"],
+            horizontal=True
+        )
+        with st.expander("🚗 Car Lists", expanded=False):
+            if list_choice == "Полный список":
+                active_label = "Active: Полный список"
+            else:
+                active_label = "Active: Малый список"
+            st.markdown(active_label)
+
+            full_list_str = st.text_area(
+                "Полный список (one per line)",
                 value="\n".join(DEFAULT_CARS_LIST),
                 height=200,
-                help="Edit the list of cars to check. One 3-digit number per line."
+                help="Full list of cars to check."
             )
-            cars_list = [c.strip() for c in cars_list_str.split("\n") if c.strip()]
+            small_list_str = st.text_area(
+                "Малый список (one per line)",
+                value="\n".join(SMALL_CARS_LIST),
+                height=110,
+                help="Short list of cars to check."
+            )
+
+        full_list = [c.strip() for c in full_list_str.split("\n") if c.strip()]
+        small_list = [c.strip() for c in small_list_str.split("\n") if c.strip()]
+        cars_list = full_list if list_choice == "Полный список" else small_list
 
         # Refresh button
         if st.button("🔄 Refresh Data", use_container_width=True):
@@ -124,6 +144,12 @@ def main():
             missing_cars_str = ", ".join(missing_current)
             st.text_area("Missing cars:", missing_cars_str, height=68, disabled=True)
 
+        # Copy phone numbers for missing cars (st.code has built-in copy button)
+        if missing_current:
+            phones_output = format_missing_cars_output(missing_current, car_phones)
+            if phones_output and phones_output != "Все автомобили имеют данные ✅" and phones_output != "Телефонов для указанных автомобилей не найдено":
+                st.code(phones_output, language=None)
+
         # Build full table: [Car, Odometer, Phone] for ALL cars
         table_rows = []
         for car in cars_list:
@@ -149,12 +175,6 @@ def main():
                 "Phone": st.column_config.TextColumn("Phone", width="large"),
             }
         )
-
-        # Copy phone numbers for missing cars (st.code has built-in copy button)
-        if missing_current:
-            phones_output = format_missing_cars_output(missing_current, car_phones)
-            if phones_output and phones_output != "Все автомобили имеют данные ✅" and phones_output != "Телефонов для указанных автомобилей не найдено":
-                st.code(phones_output, language=None)
 
         with st.expander("🔍 View Full Google Sheets Data", expanded=False):
             st.dataframe(df_od, use_container_width=True, hide_index=True)
