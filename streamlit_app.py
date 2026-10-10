@@ -13,8 +13,9 @@ st.set_page_config(
 
 # Navigation
 pg = st.navigation([
-    st.Page("pages/odometers_check.py", title="📊 Odometers Check", icon="📊"),
-    st.Page("pages/fuel_counting.py", title="⛽ Fuel Counting", icon="⛽"),
+    st.Page("pages/odometers_check.py", title=" Odometers Check", icon="📊"),
+    st.Page("pages/fuel_counting.py", title=" Fuel Counting", icon="⛽"),
+    st.Page("pages/cards_admin.py", title=" Cards DB", icon="💳"),
 ])
 
 pg.run()

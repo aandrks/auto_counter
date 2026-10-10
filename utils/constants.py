@@ -26,3 +26,34 @@ DEFAULT_NORM_DICT = {
 # Google Sheets configuration
 GSHEETS_SPREADSHEET_NAME = "форма_пробег_информация"
 GSHEETS_WORKSHEET_INDEX = 0
+
+# Columns of the Fuel Counting report.
+# Each entry is a dict: {"key", "label", "format", "width"}
+#   key    - internal column from build_result_dataframe() (DO NOT rename it)
+#   label  - header shown on screen and in CSV/Excel. May use the placeholders
+#            {month_now} / {month_prev} which are replaced with real month names
+#            (e.g. "Сентябрь 2026" / "Август 2026").
+#   format - number format for on-screen display ("%.2f" / "%.1f" / "%d") or
+#            None for text
+#   width  - column width (in characters) for the exported Excel file
+# To rename -> edit "label"; reorder -> move the dict; hide -> delete the dict.
+# Available keys: Car, Result, Fuel, Odometer, Month1, Month2, Car_number, Type,
+#                 Card, Abnormal
+FUEL_REPORT_COLUMNS = [
+    {"key": "Car",      "label": "Авто",          "format": None,   "width": 28},
+    {"key": "Result",   "label": "Расход",        "format": "%.2f", "width": 12},
+    {"key": "Fuel",     "label": "Топливо (мес)", "format": "%.1f", "width": 14},
+    {"key": "Odometer", "label": "Одометр (мес)", "format": "%d",   "width": 14},
+    {"key": "Month2",   "label": "{month_prev}",  "format": "%d",   "width": 14},
+    {"key": "Month1",   "label": "{month_now}",   "format": "%d",   "width": 14},
+]
+
+# Month names for the auto-labeled odometer columns ({month_now}/{month_prev}).
+# Replace with English names (e.g. "January", ...) if needed.
+MONTH_NAMES = [
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+]
+
+# Template of the auto month label. Placeholders: {month}, {year}, {num} (MM.YYYY).
+FUEL_MONTH_LABEL_FORMAT = "{month} {year}"

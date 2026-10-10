@@ -4,3 +4,7 @@
 .idea
 car_cards.json
 __pycache__/
+logs/
+test_results/
+opencode.json
+.DS_Store
