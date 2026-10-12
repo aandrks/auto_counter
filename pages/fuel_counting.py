@@ -168,6 +168,9 @@ def main():
                 st.session_state["fuel_df_combined"] = df_combined
                 st.session_state["fuel_files_sig"] = files_sig
                 st.session_state["fuel_files_names"] = [f.name for f in files]
+                # New files -> period picker falls back to the new auto value.
+                st.session_state.pop("period_month", None)
+                st.session_state.pop("period_year", None)
             else:
                 df_combined = st.session_state["fuel_df_combined"]
             st.success(f"Loaded {len(files)} files, {len(df_combined)} rows total")
@@ -181,8 +184,33 @@ def main():
                 + ". Загрузите новые файлы, чтобы пересчитать."
             )
 
-        # Extract date from fuel data
-        dt_date = extract_date_from_fuel_data(df_combined)
+        # The file's date marks the reporting month (any day inside it, e.g.
+        # 05.09.2026 -> September). The odometer period is the 1st day of the
+        # NEXT month (-> 01.10.2026): readings are compared around the end of
+        # August and around the end of September / start of October.
+        detected = extract_date_from_fuel_data(df_combined)
+        next_month = detected.month + 1
+        next_year = detected.year
+        if next_month > 12:
+            next_month = 1
+            next_year += 1
+        auto_period = datetime(next_year, next_month, 1)
+
+        # Sidebar: pick the period month; default is the auto-detected one.
+        with st.sidebar:
+            st.divider()
+            st.header("📅 Период одометрии")
+            _col_m, _col_y = st.columns(2)
+            _month_name = _col_m.selectbox(
+                "Месяц", MONTH_NAMES, index=auto_period.month - 1, key="period_month"
+            )
+            _years = list(range(auto_period.year - 1, auto_period.year + 3))
+            _year = _col_y.selectbox(
+                "Год", _years, index=_years.index(auto_period.year), key="period_year"
+            )
+            st.caption(f"Автоопределено: {MONTH_NAMES[auto_period.month - 1]} {auto_period.year}")
+
+        dt_date = datetime(_year, MONTH_NAMES.index(_month_name) + 1, 1)
         st.info(f"📅 Detected period: **{dt_date.strftime('%B %Y')}** ({dt_date.strftime('%d.%m.%Y')})")
 
         # Load cards mapping - try Supabase first, fallback to secrets
